@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --pt-carbon: #141C2B;
+        --pt-graphite: #222D40;
+        --pt-bg: #F3F5F7;
+        --pt-surface: #FFFFFF;
+        --pt-red: #B24C4C;
+        --pt-green: #3D8467;
+        --pt-amber: #AD7A34;
+        --pt-muted: #64748B;
+    }
+
+    body {
+        background-color: var(--pt-bg);
+        color: var(--pt-carbon);
+    }
+}
