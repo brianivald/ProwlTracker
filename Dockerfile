@@ -24,8 +24,8 @@ RUN composer dump-autoload --no-dev --optimize --no-scripts
 FROM node:22-alpine AS assets
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts --no-audit --no-fund
+COPY package.json package-lock.json* ./
+RUN npm install --ignore-scripts --no-audit --no-fund
 
 COPY vite.config.js tailwind.config.js postcss.config.js ./
 COPY resources ./resources
