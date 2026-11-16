@@ -257,13 +257,17 @@
                         </div>
                     </div>
 
-                    <div class="lg:col-span-8 space-y-5">
+                    <div
+                        x-data="{ notifyMaster: @js((bool) old('notify_enabled', $zone->notify_enabled)) }"
+                        class="lg:col-span-8 space-y-5"
+                    >
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                             <label class="inline-flex items-center gap-2.5 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="notify_enabled"
                                     value="1"
+                                    x-model="notifyMaster"
                                     class="rounded-sm border-slate-400 text-pt-carbon focus:ring-pt-graphite"
                                     @checked(old('notify_enabled', $zone->notify_enabled))
                                 />
@@ -272,12 +276,16 @@
                                 </span>
                             </label>
 
-                            <label class="inline-flex items-center gap-2.5 cursor-pointer">
+                            <label
+                                class="inline-flex items-center gap-2.5 cursor-pointer transition-opacity"
+                                :style="!notifyMaster ? 'opacity: 0.42; pointer-events: none;' : ''"
+                            >
                                 <input
                                     type="checkbox"
                                     name="notify_only_armed"
                                     value="1"
-                                    class="rounded-sm border-slate-400 text-pt-carbon focus:ring-pt-graphite"
+                                    x-bind:disabled="!notifyMaster"
+                                    class="rounded-sm border-slate-400 text-pt-carbon focus:ring-pt-graphite disabled:bg-slate-200 disabled:cursor-not-allowed"
                                     @checked(old('notify_only_armed', $zone->notify_only_armed ?? true))
                                 />
                                 <span class="text-xs text-pt-carbon">
@@ -286,102 +294,111 @@
                             </label>
                         </div>
 
-                        <div class="grid gap-4 sm:grid-cols-12">
-                            <!-- Canal 1: Correo electrónico (Resend) -->
-                            <div class="sm:col-span-6 p-3.5 bg-pt-bg border border-slate-200 rounded-sm space-y-3">
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        name="notify_email_enabled"
-                                        value="1"
-                                        class="rounded-sm border-slate-400 text-pt-carbon focus:ring-pt-graphite"
-                                        @checked(old('notify_email_enabled', $zone->notify_email_enabled))
-                                    />
-                                    <span class="text-xs font-semibold text-pt-carbon">Correo electrónico (Resend HTTP API)</span>
-                                </label>
+                        <!-- Fieldset nativo: deshabilita todos los inputs hijos (Correo, Telegram y Tiempo de espera) cuando notifyMaster está desmarcado -->
+                        <fieldset
+                            x-bind:disabled="!notifyMaster"
+                            class="space-y-5 transition-opacity"
+                            :style="!notifyMaster ? 'opacity: 0.42; pointer-events: none;' : ''"
+                        >
+                            <div class="grid gap-4 sm:grid-cols-12">
+                                <!-- Canal 1: Correo electrónico (Resend) -->
+                                <div class="sm:col-span-6 p-3.5 bg-pt-bg border border-slate-200 rounded-sm space-y-3">
+                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            name="notify_email_enabled"
+                                            value="1"
+                                            class="rounded-sm border-slate-400 text-pt-carbon focus:ring-pt-graphite"
+                                            @checked(old('notify_email_enabled', $zone->notify_email_enabled))
+                                        />
+                                        <span class="text-xs font-semibold text-pt-carbon">Correo electrónico (Resend HTTP API)</span>
+                                    </label>
 
-                                <div>
-                                    <x-input-label for="notify_email_to" value="Correo destino del administrador" />
-                                    <x-text-input
-                                        id="notify_email_to"
-                                        name="notify_email_to"
-                                        type="email"
-                                        maxlength="180"
-                                        placeholder="gomezesquivelbrian@gmail.com"
-                                        class="mt-1 block w-full text-xs rounded-sm"
-                                        :value="old('notify_email_to', $zone->notify_email_to ?: 'gomezesquivelbrian@gmail.com')"
-                                    />
-                                    <p class="mt-1 text-[11px] text-pt-muted">Recibe resumen del incidente y evidencia adjunta.</p>
-                                    <x-input-error :messages="$errors->get('notify_email_to')" class="mt-1" />
+                                    <div>
+                                        <x-input-label for="notify_email_to" value="Correo destino del administrador" />
+                                        <x-text-input
+                                            id="notify_email_to"
+                                            name="notify_email_to"
+                                            type="email"
+                                            maxlength="180"
+                                            placeholder="gomezesquivelbrian@gmail.com"
+                                            class="mt-1 block w-full text-xs rounded-sm"
+                                            :value="old('notify_email_to', $zone->notify_email_to ?: 'gomezesquivelbrian@gmail.com')"
+                                        />
+                                        <p class="mt-1 text-[11px] text-pt-muted">Recibe resumen del incidente y evidencia adjunta.</p>
+                                        <x-input-error :messages="$errors->get('notify_email_to')" class="mt-1" />
+                                    </div>
+                                </div>
+
+                                <!-- Canal 2: Telegram Bot -->
+                                <div class="sm:col-span-6 p-3.5 bg-pt-bg border border-slate-200 rounded-sm space-y-3">
+                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            name="notify_telegram_enabled"
+                                            value="1"
+                                            class="rounded-sm border-slate-400 text-pt-carbon focus:ring-pt-graphite"
+                                            @checked(old('notify_telegram_enabled', $zone->notify_telegram_enabled))
+                                        />
+                                        <span class="text-xs font-semibold text-pt-carbon">Mensajería instantánea (Telegram Bot)</span>
+                                    </label>
+
+                                    <div>
+                                        <x-input-label for="notify_telegram_chat_id" value="Chat ID de Telegram" />
+                                        <x-text-input
+                                            id="notify_telegram_chat_id"
+                                            name="notify_telegram_chat_id"
+                                            type="text"
+                                            maxlength="100"
+                                            placeholder="Ej. 123456789"
+                                            class="mt-1 block w-full text-xs rounded-sm tabular-nums"
+                                            :value="old('notify_telegram_chat_id', $zone->notify_telegram_chat_id)"
+                                        />
+                                        <p class="mt-1 text-[11px] text-pt-muted">Envía la fotografía de evidencia al instante al celular.</p>
+                                        <x-input-error :messages="$errors->get('notify_telegram_chat_id')" class="mt-1" />
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Canal 2: Telegram Bot -->
-                            <div class="sm:col-span-6 p-3.5 bg-pt-bg border border-slate-200 rounded-sm space-y-3">
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        name="notify_telegram_enabled"
-                                        value="1"
-                                        class="rounded-sm border-slate-400 text-pt-carbon focus:ring-pt-graphite"
-                                        @checked(old('notify_telegram_enabled', $zone->notify_telegram_enabled))
-                                    />
-                                    <span class="text-xs font-semibold text-pt-carbon">Mensajería instantánea (Telegram Bot)</span>
-                                </label>
-
+                            <div class="grid gap-4 sm:grid-cols-2 items-end pt-1">
                                 <div>
-                                    <x-input-label for="notify_telegram_chat_id" value="Chat ID de Telegram" />
+                                    <x-input-label for="notify_cooldown_minutes" value="Tiempo de espera entre notificaciones externas (minutos)" />
                                     <x-text-input
-                                        id="notify_telegram_chat_id"
-                                        name="notify_telegram_chat_id"
-                                        type="text"
-                                        maxlength="100"
-                                        placeholder="Ej. 123456789"
-                                        class="mt-1 block w-full text-xs rounded-sm tabular-nums"
-                                        :value="old('notify_telegram_chat_id', $zone->notify_telegram_chat_id)"
+                                        id="notify_cooldown_minutes"
+                                        name="notify_cooldown_minutes"
+                                        type="number"
+                                        min="1"
+                                        max="1440"
+                                        class="mt-1.5 block w-full text-xs rounded-sm tabular-nums"
+                                        :value="old('notify_cooldown_minutes', $zone->notify_cooldown_minutes ?? 15)"
+                                        required
                                     />
-                                    <p class="mt-1 text-[11px] text-pt-muted">Envía la fotografía de evidencia al instante al celular.</p>
-                                    <x-input-error :messages="$errors->get('notify_telegram_chat_id')" class="mt-1" />
+                                    <p class="mt-1 text-[11px] text-pt-muted">Tras enviar un aviso, no se enviarán más correos/mensajes durante este lapso (ej. 15 min).</p>
+                                    <x-input-error :messages="$errors->get('notify_cooldown_minutes')" class="mt-1" />
                                 </div>
                             </div>
-                        </div>
+                        </fieldset>
 
-                        <div class="grid gap-4 sm:grid-cols-2 items-end pt-1">
-                            <div>
-                                <x-input-label for="notify_cooldown_minutes" value="Tiempo de espera entre notificaciones externas (minutos)" />
-                                <x-text-input
-                                    id="notify_cooldown_minutes"
-                                    name="notify_cooldown_minutes"
-                                    type="number"
-                                    min="1"
-                                    max="1440"
-                                    class="mt-1.5 block w-full text-xs rounded-sm tabular-nums"
-                                    :value="old('notify_cooldown_minutes', $zone->notify_cooldown_minutes ?? 15)"
-                                    required
-                                />
-                                <p class="mt-1 text-[11px] text-pt-muted">Tras enviar un aviso, no se enviarán más correos/mensajes durante este lapso (ej. 15 min).</p>
-                                <x-input-error :messages="$errors->get('notify_cooldown_minutes')" class="mt-1" />
-                            </div>
+                        <div class="flex flex-wrap items-center sm:justify-end gap-2.5 pt-4 border-t border-slate-200">
+                            <button
+                                type="submit"
+                                name="after_save"
+                                value="test"
+                                x-bind:disabled="!notifyMaster"
+                                :class="notifyMaster ? 'bg-white border-slate-300 text-pt-carbon hover:bg-slate-100' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'"
+                                class="px-3.5 py-2 rounded-sm border text-xs font-medium transition-colors"
+                            >
+                                Guardar y probar canales
+                            </button>
 
-                            <div class="flex flex-wrap items-center sm:justify-end gap-2.5 pt-2">
-                                <button
-                                    type="submit"
-                                    name="after_save"
-                                    value="test"
-                                    class="px-3.5 py-2 rounded-sm bg-white border border-slate-300 hover:bg-slate-100 text-pt-carbon text-xs font-medium transition-colors"
-                                >
-                                    Guardar y probar canales
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    name="after_save"
-                                    value="save"
-                                    class="px-5 py-2 rounded-sm bg-pt-carbon hover:bg-pt-graphite text-white text-xs font-medium transition-colors"
-                                >
-                                    Guardar configuración
-                                </button>
-                            </div>
+                            <button
+                                type="submit"
+                                name="after_save"
+                                value="save"
+                                class="px-5 py-2 rounded-sm bg-pt-carbon hover:bg-pt-graphite text-white text-xs font-medium transition-colors"
+                            >
+                                Guardar configuración
+                            </button>
                         </div>
                     </div>
                 </div>

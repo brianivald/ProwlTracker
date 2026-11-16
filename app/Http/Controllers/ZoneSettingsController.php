@@ -64,7 +64,7 @@ class ZoneSettingsController extends Controller
             'adaptive_auto' => ['sometimes', 'boolean'],
             'notify_enabled' => ['sometimes', 'boolean'],
             'notify_only_armed' => ['sometimes', 'boolean'],
-            'notify_cooldown_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
+            'notify_cooldown_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
             'notify_email_enabled' => ['sometimes', 'boolean'],
             'notify_email_to' => ['nullable', 'email', 'max:180'],
             'notify_telegram_enabled' => ['sometimes', 'boolean'],
@@ -75,7 +75,9 @@ class ZoneSettingsController extends Controller
         sort($workDays);
 
         $zone = ZoneState::forZone();
-        $zone->update([
+        $notifyEnabled = $request->boolean('notify_enabled');
+
+        $updatePayload = [
             'work_start_hour' => (int) $data['work_start_hour'],
             'work_end_hour' => (int) $data['work_end_hour'],
             'work_days' => $workDays,
@@ -84,14 +86,20 @@ class ZoneSettingsController extends Controller
             'transit_seconds' => (float) $data['transit_seconds'],
             'alert_cooldown_seconds' => (float) $data['alert_cooldown_seconds'],
             'adaptive_auto' => $request->boolean('adaptive_auto'),
-            'notify_enabled' => $request->boolean('notify_enabled'),
-            'notify_only_armed' => $request->boolean('notify_only_armed'),
-            'notify_cooldown_minutes' => (int) $data['notify_cooldown_minutes'],
-            'notify_email_enabled' => $request->boolean('notify_email_enabled'),
-            'notify_email_to' => filled($data['notify_email_to'] ?? null) ? trim((string) $data['notify_email_to']) : null,
-            'notify_telegram_enabled' => $request->boolean('notify_telegram_enabled'),
-            'notify_telegram_chat_id' => filled($data['notify_telegram_chat_id'] ?? null) ? trim((string) $data['notify_telegram_chat_id']) : null,
-        ]);
+            'notify_enabled' => $notifyEnabled,
+        ];
+
+        // Solo sobrescribimos los campos internos de notificación si están presentes o si el interruptor está activo
+        if ($notifyEnabled || $request->has('notify_cooldown_minutes')) {
+            $updatePayload['notify_only_armed'] = $request->boolean('notify_only_armed');
+            $updatePayload['notify_cooldown_minutes'] = (int) ($data['notify_cooldown_minutes'] ?? $zone->notify_cooldown_minutes ?? 15);
+            $updatePayload['notify_email_enabled'] = $request->boolean('notify_email_enabled');
+            $updatePayload['notify_email_to'] = filled($data['notify_email_to'] ?? null) ? trim((string) $data['notify_email_to']) : null;
+            $updatePayload['notify_telegram_enabled'] = $request->boolean('notify_telegram_enabled');
+            $updatePayload['notify_telegram_chat_id'] = filled($data['notify_telegram_chat_id'] ?? null) ? trim((string) $data['notify_telegram_chat_id']) : null;
+        }
+
+        $zone->update($updatePayload);
 
         return redirect()
             ->route('settings.edit')

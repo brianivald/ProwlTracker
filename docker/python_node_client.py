@@ -83,3 +83,19 @@ def signed_post(endpoint: str, payload: dict, timeout: int = 20) -> requests.Res
     headers = build_signed_headers("POST", url, body_bytes)
     headers["Content-Type"] = "application/json"
     return requests.post(url, data=body_bytes, headers=headers, timeout=timeout)
+
+
+if __name__ == "__main__":
+    print(f"Probando conexión firmada hacia: {PROWL_API_URL}/api/schedule?zone=lab")
+    try:
+        res = signed_get("/api/schedule", params={"zone": "lab"})
+        print(f"Código HTTP: {res.status_code}")
+        print("Respuesta del servidor:", res.text)
+        if res.status_code == 200:
+            print("\n✅ ¡Comunicación exitosa! El panel en Render ya debe marcar 'Nodo sincronizado' en verde.")
+        elif res.status_code == 401:
+            print("\n❌ Error 401: Revisa que NODE_API_SECRET sea idéntico al configurado en Render.")
+        elif res.status_code == 503:
+            print("\n⚠️ Error 503: Falta definir NODE_API_SECRET en las variables de entorno de Render.")
+    except Exception as exc:
+        print(f"\n❌ No se pudo conectar: {exc}")

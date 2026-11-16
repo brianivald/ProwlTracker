@@ -42,9 +42,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $ttl = (int) config('prowltracker.node_api.online_ttl', 120);
         $online = $lastSeenTs && (now()->timestamp - (int) $lastSeenTs) <= $ttl;
 
+        $latestAlertId = (int) (\App\Models\Alert::max('id') ?? 0);
+
         return response()->json([
             'online' => (bool) $online,
             'last_seen_hm' => $lastSeenTs ? \Carbon\Carbon::createFromTimestamp((int) $lastSeenTs)->format('H:i') : null,
+            'latest_alert_id' => $latestAlertId,
         ]);
     })->name('node.status');
 });

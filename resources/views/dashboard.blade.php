@@ -233,6 +233,7 @@
                         x-data="{
                             online: @js((bool) $nodeOnline),
                             lastSeenHm: @js($nodeLastSeenHm),
+                            currentTopAlertId: @js((int) ($alerts->first()?->id ?? 0)),
                             init() {
                                 const check = () => {
                                     fetch('{{ route('node.status') }}', { headers: { 'Accept': 'application/json' } })
@@ -241,6 +242,9 @@
                                             if (d) {
                                                 this.online = !!d.online;
                                                 this.lastSeenHm = d.last_seen_hm;
+                                                if (d.latest_alert_id && this.currentTopAlertId > 0 && d.latest_alert_id > this.currentTopAlertId) {
+                                                    window.location.reload();
+                                                }
                                             }
                                         })
                                         .catch(() => {});
